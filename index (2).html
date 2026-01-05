@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perle Knowledge Hub | The Quiz</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --card-bg: #161616;
+            --text: #ffffff;
+            --accent: #ffffff;
+            --accent-dim: #888888;
+            --success: #4caf50;
+            --error: #f44336;
+            --border: #333;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin-top: 40px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* --- Login Screen --- */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 80vh;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--accent-dim);
+            margin-bottom: 40px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        input {
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: white;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        input:focus { border-color: var(--accent); }
+
+        button {
+            padding: 15px;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent);
+            color: black;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* --- User Profile Header --- */
+        #user-header {
+            display: none;
+            width: 100%;
+            padding: 20px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            object-fit: cover;
+        }
+
+        /* --- Chapter Grid --- */
+        #chapter-grid {
+            display: none;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding-bottom: 50px;
+        }
+
+        .chapter-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chapter-card:hover:not(.locked) {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+
+        .chapter-card.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        .chapter-status {
+            font-size: 0.8rem;
+            color: var(--accent-dim);
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* --- Quiz Interface --- */
+        #quiz-interface {
+            display: none;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: #222;
+            color: #ddd;
+            text-align: left;
+            padding: 15px 20px;
+            border: 1px solid #444;
+        }
+
+        .option-btn:hover { background: #333; }
+
+        .option-btn.correct { background: var(--success); color: white; border-color: var(--success); }
+        .option-btn.wrong { background: var(--error); color: white; border-color: var(--error); }
+
+        .nav-btn {
+            margin-top: 20px;
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            width: auto;
+            padding: 10px 20px;
+        }
+
+        /* Social Links Footer */
+        footer {
+            margin-top: 40px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+        }
+        
+        .social-link {
+            color: var(--accent-dim);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        
+        .social-link:hover { color: var(--accent); }
+
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="container">
+        <div class="logo">PERLE.</div>
+        <div class="subtitle">The Knowledge Validation Layer</div>
+        
+        <div class="input-group">
+            <input type="text" id="twitter-handle" placeholder="Enter Twitter Username (e.g. PerleLabs)">
+            <button onclick="handleLogin()">Connect with X</button>
+        </div>
+        <p style="font-size: 0.8rem; color: #666; margin-top: 20px;">
+            This will fetch your public profile picture for the session.
+        </p>
+    </div>
+
+    <!-- HEADER (Visible after login) -->
+    <div id="user-header">
+        <div class="user-info">
+            <img id="header-avatar" src="" class="user-avatar" alt="User">
+            <div>
+                <div style="font-weight:bold" id="header-username">@user</div>
+                <div style="font-size:0.8rem; color:#888">Scholar Rank</div>
+            </div>
+        </div>
+        <button onclick="logout()" style="padding: 8px 15px; font-size:0.8rem; width:auto;">Exit</button>
+    </div>
+
+    <!-- CHAPTER SELECTION -->
+    <div id="chapter-grid" class="container">
+        <!-- Injected via JS -->
+    </div>
+
+    <!-- QUIZ INTERFACE -->
+    <div id="quiz-interface" class="container">
+        <button onclick="returnToMenu()" style="background:none; border:none; color:#888; cursor:pointer; margin-bottom:10px;">← Back to Chapters</button>
+        <div class="progress-bar"><div class="progress-fill" id="quiz-progress"></div></div>
+        
+        <div style="display:flex; justify-content:space-between; color:#888; margin-bottom:10px;">
+            <span id="q-counter">Question 1/20</span>
+            <span id="chapter-title-display">Chapter 1</span>
+        </div>
+
+        <div class="question-text" id="q-text">Loading...</div>
+        <div class="options-grid" id="options-container">
+            <!-- Options injected here -->
+        </div>
+    </div>
+
+    <footer>
+        <a href="https://www.perle.ai" target="_blank" class="social-link">Perle.ai</a>
+        <a href="https://www.perle.xyz" target="_blank" class="social-link">Perle.xyz</a>
+        <a href="https://x.com/PerleLabs" target="_blank" class="social-link">X / Twitter</a>
+        <a href="https://discord.gg/joinperle" target="_blank" class="social-link">Discord</a>
+    </footer>
+
+<script>
+    // --- DATA ---
+    // 10 Chapters, 20 Questions each.
+    // NOTE: Questions are generated based on the detailed research of Perle Labs, Perle.ai, Team, and Ecosystem.
+    
+    const chapters = [
+        { id: 0, title: "Mission & Vision", desc: "The foundational goals of Perle." },
+        { id: 1, title: "The Team", desc: "Founders, background, and experts." },
+        { id: 2, title: "Perle Labs Platform", desc: "The contributor ecosystem." },
+        { id: 3, title: "Technology & Blockchain", desc: "Solana, Web3, and Tech Stack." },
+        { id: 4, title: "Perle Creator", desc: "The marketplace and enterprise tools." },
+        { id: 5, title: "Data & Use Cases", desc: "Multimodal data and applications." },
+        { id: 6, title: "Funding & Partners", desc: "Investors and financial backing." },
+        { id: 7, title: "Contributor Journey", desc: "Training, verification, and reputation." },
+        { id: 8, title: "Events & History", desc: "Key milestones and Breakpoint 2025." },
+        { id: 9, title: "Philosophy & Future", desc: "Human-in-the-loop and Agentic AI." }
+    ];
+
+    const questionBank = {
+        0: [ // Mission & Vision
+            { q: "What is the primary mission of Perle?", options: ["To build a new crypto exchange", "To create a transparent marketplace for high-quality AI training data", "To replace humans with AI entirely", "To launch a memecoin on Solana", "To build a social network for pets"], correct: 1 },
+            { q: "What specific problem in AI does Perle aim to solve?", options: ["Lack of GPU compute", "Slow internet speeds", "The 'black box' data quality problem", "High cost of electricity", "Lack of AI algorithms"], correct: 2 },
+            { q: "Perle describes itself as the _____ layer for AI.", options: ["Compute", "Data Quality", "Execution", "Storage", "Governance"], correct: 1 },
+            { q: "What is the 'Perle of Wisdom' metaphor often used to describe?", options: ["A hidden token", "A specific unit of verified human intelligence/data", "The CEO's blog", "A Discord role", "A type of NFT"], correct: 1 },
+            { q: "Perle believes that as AI models get better, the need for human data _____.", options: ["Disappears", "Decreases significantly", "Becomes a bottleneck and increases in value", "Remains exactly the same", "Is only needed for images"], correct: 2 },
+            { q: "Which concept is central to Perle's approach to data?", options: ["Anonymous crowdsourcing", "Verifiable provenance", "Free data scraping", "Off-chain secrecy", "Synthetic data generation only"], correct: 1 },
+            { q: "Perle aims to transition data labeling from 'Gig Work' to _____.", options: ["Volunteer work", "A professional, reputation-based career", "Automated scripts", "Passive income", "Gambling"], correct: 1 },
+            { q: "What ensures fairness for contributors in the Perle ecosystem?", options: ["Trusting the CEO", "On-chain attribution and payments", "Monthly paper checks", "A promise note", "Government regulation"], correct: 1 },
+            { q: "Perle's vision includes reducing _____ in AI models.", options: ["Speed", "Bias and hallucinations", "Creativity", "Vocabulary", "Logic"], correct: 1 },
+            { q: "Who are the primary customers of Perle.ai?", options: ["Retail crypto traders", "Enterprise AI teams and Frontier Labs", "Video game players", "Music producers", "Local bakeries"], correct: 1 },
+            { q: "What does RLHF stand for in Perle's context?", options: ["Real Life Have Fun", "Reinforcement Learning from Human Feedback", "Robotic Learning High Frequency", "Run Loop Human Fast", "Real Ledger Hash Function"], correct: 1 },
+            { q: "Perle operates on the belief that future AI will be _____.", options: ["Agentic", "Static", "Offline", "Single-modal", "Text-only"], correct: 0 },
+            { q: "What creates trust in the Perle ecosystem?", options: ["Brand marketing", "Cryptographic audit trails", "Closed source code", "User reviews", "Email newsletters"], correct: 1 },
+            { q: "Perle is building infrastructure for _____.", options: ["Web2 Social Media", "Verifiable AI Training", "DeFi Lending", "Cloud Storage", "Video Streaming"], correct: 1 },
+            { q: "The ecosystem is designed to be _____.", options: ["Closed and private", "Permissionless and global", "US-only", "Corporate-only", "Invite-only forever"], correct: 1 },
+            { q: "What is a key differentiator of Perle compared to traditional labeling firms?", options: ["Cheaper prices", "Blockchain-based transparency", "Faster servers", "More office locations", "Older technology"], correct: 1 },
+            { q: "Perle empowers contributors to own their _____.", options: ["Data rights", "Work history and reputation", "Compute power", "Internet connection", "Hardware"], correct: 1 },
+            { q: "Perle's tagline often refers to bringing _____ to AI.", options: ["Chaos", "Humanity/Wisdom", "Speed", "Money", "Power"], correct: 1 },
+            { q: "What happens to data quality without human oversight according to Perle?", options: ["It improves", "It degrades (Model Collapse)", "It stays the same", "It becomes cheaper", "It becomes 3D"], correct: 1 },
+            { q: "Perle serves as a bridge between _____ and AI developers.", options: ["Gamers", "Domain Experts", "Bots", "Crypto Whales", "Politicians"], correct: 1 }
+        ],
+        1: [ // The Team
+            { q: "Who is the Founder and CEO of Perle?", options: ["Elon Musk", "Ahmed Rashad", "Vitalik Buterin", "Sam Altman", "Anatoly Yakovenko"], correct: 1 },
+            { q: "What unusual background does CEO Ahmed Rashad have before tech?", options: ["Professional Chef", "Offshore Oil Driller", "Airline Pilot", "Tennis Player", "Musician"], correct: 1 },
+            { q: "Ahmed Rashad previously led data operations at which major AI company?", options: ["OpenAI", "Scale AI", "Google DeepMind", "Anthropic", "Hugging Face"], correct: 1 },
+            { q: "Which tech giant did Ahmed Rashad work for in 2017?", options: ["Apple", "Amazon", "Microsoft", "Netflix", "Facebook"], correct: 1 },
+            { q: "Who is the Product Operations lead at Perle?", options: ["Sajjad Abdoli", "Moe Abdelfattah", "John Doe", "Sarah Smith", "David Lee"], correct: 1 },
+            { q: "Who is the AI Research Scientist at Perle?", options: ["Moe Abdelfattah", "Sajjad Abdoli", "Ahmed Rashad", "Geoffrey Hinton", "Yann LeCun"], correct: 1 },
+            { q: "Perle's team includes veterans from which university?", options: ["Harvard", "MIT", "Oxford", "Yale", "Princeton"], correct: 1 },
+            { q: "The team also has alumni from which social media giant?", options: ["Twitter", "Meta (Facebook)", "Snapchat", "TikTok", "Pinterest"], correct: 1 },
+            { q: "Where is Perle Labs headquartered/based?", options: ["London", "San Francisco / Global", "Tokyo", "Berlin", "Singapore"], correct: 1 },
+            { q: "What role did Ahmed Rashad hold at Scale AI?", options: ["Intern", "Head of Human Data Operations", "CFO", "Lead Designer", "Sales Associate"], correct: 1 },
+            { q: "Sajjad Abdoli holds a PhD from which institution?", options: ["Stanford", "TS Montreal / MILA", "Cambridge", "Caltech", "ETH Zurich"], correct: 1 },
+            { q: "The founding team emphasizes what value?", options: ["Move fast and break things", "Don't be evil", "Quality over quantity", "Profit first", "Anonymity"], correct: 2 },
+            { q: "Ahmed Rashad has also studied at which prestigious institute?", options: ["MIT", "Julliard", "West Point", "Cordon Bleu", "Parsons"], correct: 0 },
+            { q: "The team's background combines expertise in AI and _____.", options: ["Agriculture", "Blockchain/Web3", "Construction", "Fashion", "Automotive"], correct: 1 },
+            { q: "Who is likely to have presented at Breakpoint 2025?", options: ["Sajjad Abdoli", "Ahmed Rashad", "Moe Abdelfattah", "A hired actor", "A chatbot"], correct: 1 },
+            { q: "The team refers to themselves as building the _____ for AI.", options: ["Roof", "Foundation", "Windows", "Doors", "Decoration"], correct: 1 },
+            { q: "Which investor led the Seed Round?", options: ["Sequoia", "Framework Ventures", "a16z", "Paradigm", "Multicoin"], correct: 1 },
+            { q: "Which investor led the Pre-Seed round?", options: ["CoinFund", "Pantera", "Framework", "Binance Labs", "Coinbase Ventures"], correct: 0 },
+            { q: "The team's operational philosophy involves 'operating in _____'.", options: ["Chaos", "Tight formation", "Silos", "Secret", "Isolation"], correct: 1 },
+            { q: "What is Ahmed's view on 'generics' in communication?", options: ["They are good", "Nothing gets achieved with generics", "They save time", "They are polite", "They are necessary"], correct: 1 }
+        ],
+        2: [ // Perle Labs Platform
+            { q: "What is Perle Labs?", options: ["A DEX", "The contributor-facing platform", "A wallet", "A game", "A news site"], correct: 1 },
+            { q: "What is the URL for the contributor platform?", options: ["perle.com", "perle.xyz", "perle.org", "perle.net", "perle.io"], correct: 1 },
+            { q: "Users on Perle Labs are primarily called _____.", options: ["Miners", "Contributors / Experts", "Gamers", "Traders", "Viewers"], correct: 1 },
+            { q: "What must a user do to access higher-paying tasks?", options: ["Pay a fee", "Build Reputation & Verify Skills", "Watch ads", "Refer friends", "Buy tokens"], correct: 1 },
+            { q: "What system does Perle Labs use to organize workers?", options: ["Random assignment", "Guilds", "Lottery", "Alphabetical order", "Age"], correct: 1 },
+            { q: "Perle Labs provides '_____ in the loop'.", options: ["Robots", "Experts", "Children", "Animals", "Aliens"], correct: 1 },
+            { q: "Which of these is NOT a data type supported by Perle Labs?", options: ["Text", "Image", "Video", "Smell", "Audio"], correct: 3 },
+            { q: "What is 'Smart Router' in the Perle context?", options: ["A hardware device", "A system to route tasks to the best-suited expert", "A wifi signal", "A map app", "A crypto bridge"], correct: 1 },
+            { q: "How are contributions verified?", options: ["They aren't", "Consensus validation and QA layers", "By the user themselves", "By voting", "By chance"], correct: 1 },
+            { q: "What happens if a contributor consistently submits bad data?", options: ["Nothing", "Their reputation score drops", "They get a bonus", "They become a mod", "They get banned immediately"], correct: 1 },
+            { q: "Perle Labs uses which technology for payment transparency?", options: ["PayPal", "Blockchain", "Western Union", "Cash in mail", "Bank wire only"], correct: 1 },
+            { q: "The platform supports _____ languages.", options: ["English only", "Multilingual / Global", "Spanish only", "Coding languages only", "Binary only"], correct: 1 },
+            { q: "What is a 'Perle Badge'?", options: ["A physical sticker", "A digital credential of expertise", "A coupon", "A toy", "A subscription"], correct: 1 },
+            { q: "Perle Labs effectively creates a _____ of human intelligence.", options: ["Library", "Liquidity Pool / Marketplace", "Museum", "Graveyard", "School"], correct: 1 },
+            { q: "The interface for contributors is designed to be _____.", options: ["Complex", "Self-serve and user-friendly", "Command line only", "VR only", "Audio only"], correct: 1 },
+            { q: "Can enterprises bring their own annotators to Perle Labs?", options: ["No", "Yes, using the platform tools", "Maybe", "Only on Sundays", "Never"], correct: 1 },
+            { q: "What is the 'Quality Baseline'?", options: ["0%", "50%", "The minimum standard maintained by Perle templates", "100%", "Unknown"], correct: 2 },
+            { q: "Perle Labs replaces anonymous crowd labor with _____.", options: ["AI bots", "Verified Experts", "Random people", "Volunteers", "Interns"], correct: 1 },
+            { q: "Tasks on Perle Labs are often _____ specific.", options: ["Domain", "Time", "Location", "Device", "Color"], correct: 0 },
+            { q: "The platform is currently in which phase (as of late 2025)?", options: ["Alpha", "Beta / Early Access", "Shutdown", "Concept", "Legacy"], correct: 1 }
+        ],
+        3: [ // Tech & Blockchain
+            { q: "Which blockchain is Perle built on?", options: ["Ethereum", "Solana", "Bitcoin", "Cardano", "Polygon"], correct: 1 },
+            { q: "Why did Perle choose Solana?", options: ["Low throughput", "High latency", "High throughput and low transaction costs", "Hype", "Colors"], correct: 2 },
+            { q: "What specific data is stored on-chain?", options: ["The entire image files", "Attribution, verification logs, and payments", "User passwords", "Video streams", "Emails"], correct: 1 },
+            { q: "Perle uses blockchain to provide a _____ audit trail.", options: ["Cryptographic", "Paper", "Verbal", "Hidden", "Temporary"], correct: 0 },
+            { q: "Payments to contributors are made using _____.", options: ["Gold bars", "Crypto (USDC/SOL)", "Gift cards", "Store credit", "IOUs"], correct: 1 },
+            { q: "Does a contributor need a wallet to use Perle?", options: ["No, never", "Yes (e.g., Phantom/Solana wallet)", "Only a bank account", "Only a credit card", "Only a phone number"], correct: 1 },
+            { q: "What is the benefit of on-chain reputation?", options: ["It looks cool", "It is portable and verifiable", "It increases gas fees", "It slows down the app", "It is anonymous"], correct: 1 },
+            { q: "Perle's infrastructure is described as _____.", options: ["Web 1.0", "Web2", "Web3 / Crypto-native", "Offline", "Analog"], correct: 2 },
+            { q: "What prevents 'Sybil attacks' (fake accounts) on Perle?", options: ["Nothing", "On-chain verification and proof of work", "High fees", "Invite codes only", "Manual approval"], correct: 1 },
+            { q: "The integration of blockchain creates a _____ data economy.", options: ["Transparent", "Opaque", "Slow", "Expensive", "Centralized"], correct: 0 },
+            { q: "Perle's tech stack bridges _____ and _____.", options: ["Cars; Planes", "Web2 Enterprise; Web3 Contributors", "Food; Drink", "Past; Future", "iOS; Android"], correct: 1 },
+            { q: "What is 'Provenance' in data?", options: ["Where it comes from and who touched it", "The file size", "The color depth", "The price", "The storage location"], correct: 0 },
+            { q: "Does Perle use blockchain for data storage (hosting)?", options: ["Yes, everything is on-chain", "No, typically for attribution/logic (data is off-chain)", "Only for text", "Only for images", "Only for video"], correct: 1 },
+            { q: "Solana's speed allows Perle to offer _____ feedback loops.", options: ["Monthly", "Weekly", "Rapid / Near Real-time", "Yearly", "Slow"], correct: 2 },
+            { q: "The 'Smart Router' relies on data regarding user _____.", options: ["Height", "Expertise/Performance History", "Location", "Net Worth", "Device"], correct: 1 },
+            { q: "On-chain history allows contributors to prove their _____.", options: ["Wealth", "Skills and Work History", "Address", "Age", "Nationality"], correct: 1 },
+            { q: "Perle creates a 'Capital Efficient' market by removing _____.", options: ["Computers", "Middlemen/Rent-seekers", "Electricity", "Internet", "Software"], correct: 1 },
+            { q: "What does 'Crypto-native' mean for Perle?", options: ["It only trades tokens", "The economic logic is built on blockchain rails", "It uses encryption", "It is a secret", "It is illegal"], correct: 1 },
+            { q: "The use of Solana helps reduce overhead costs by _____.", options: ["10%", "50%", "95-98% (setup time/admin)", "0%", "2%"], correct: 2 },
+            { q: "Perle's approach to data labeling is _____.", options: ["Decentralized", "Monolithic", "Dictatorial", "Random", "Static"], correct: 0 }
+        ],
+        4: [ // Perle Creator
+            { q: "What is 'Perle Labs Creator'?", options: ["A painting app", "A new marketplace platform for data projects", "A token", "A VR headset", "A coding language"], correct: 1 },
+            { q: "Where was Perle Creator announced?", options: ["CES", "Breakpoint 2025", "E3", "WWDC", "Google I/O"], correct: 1 },
+            { q: "Perle Creator allows teams to launch projects in _____.", options: ["Months", "Weeks", "Minutes/Seconds", "Years", "Decades"], correct: 2 },
+            { q: "What feature helps teams start quickly?", options: ["Pre-built Templates", "Blank screens", "Phone calls", "Fax machines", "Manuals"], correct: 0 },
+            { q: "Perle Creator is a _____ sided marketplace.", options: ["One", "Two", "Three", "Four", "Five"], correct: 1 },
+            { q: "Who are the two sides of the Creator marketplace?", options: ["Buyers and Sellers", "AI Teams and Verified Contributors", "Gamers and Streamers", "Banks and Governments", "Artists and Fans"], correct: 1 },
+            { q: "Can teams bring their own workforce to Creator?", options: ["No", "Yes", "Only on weekends", "Only for text", "Only for audio"], correct: 1 },
+            { q: "Creator provides full visibility into _____.", options: ["The weather", "Who touches the data", "Stock prices", "News", "Sports scores"], correct: 1 },
+            { q: "What is 'Version Control' in Creator used for?", options: ["Software code only", "Instructions and Schemas", "Music playlists", "Video games", "Chat logs"], correct: 1 },
+            { q: "Creator allows payments via _____.", options: ["Credit Card and Crypto Wallet", "Cash only", "Check only", "Barter", "Gold"], correct: 0 },
+            { q: "The 'Smart Router' in Creator matches tasks to _____.", options: ["Random users", "Verified Contributors with specific expertise", "Bots", "Lowest bidders", "Newest users"], correct: 1 },
+            { q: "Creator aims to solve the bottleneck of _____.", options: ["Storage", "Data Pipeline Setup", "Internet speed", "Monitor resolution", "Keyboard typing"], correct: 1 },
+            { q: "Are edits and changes logged in Creator?", options: ["No", "Yes, fully logged", "Sometimes", "Only deletions", "Only additions"], correct: 1 },
+            { q: "Creator reflects Perle's _____ baseline.", options: ["Pricing", "Quality", "Speed", "Quantity", "Color"], correct: 1 },
+            { q: "The platform is designed for _____ grade data.", options: ["Consumer", "Enterprise / Frontier Lab", "Hobbyist", "Student", "Toy"], correct: 1 },
+            { q: "What allows for 'Live Accuracy Signals' in Creator?", options: ["Magic", "Real-time verification and analytics", "Guessing", "Waiting", "Emailing"], correct: 1 },
+            { q: "Creator helps teams avoid building internal _____.", options: ["Offices", "Ops teams of hundreds", "Cafeterias", "Gyms", "Parking lots"], correct: 1 },
+            { q: "The launch of Creator positions Perle as a _____ player.", options: ["Niche", "Infrastructure", "Media", "Gaming", "Social"], correct: 1 },
+            { q: "Creator uses AI to assist in _____.", options: ["Drawing", "Workflow setup", "Singing", "Driving", "Cooking"], correct: 1 },
+            { q: "The ultimate goal of Creator is to facilitate _____.", options: ["Human-led AI at scale", "Robot domination", "Cheap labor", "Free data", "Ads"], correct: 0 }
+        ],
+        5: [ // Data & Use Cases
+            { q: "Which of these is a text-based use case?", options: ["Object detection", "Sentiment Analysis / RLHF", "Voice transcription", "Face recognition", "Lidar"], correct: 1 },
+            { q: "Which of these is an image-based use case?", options: ["Translation", "Segmentation / Bounding Boxes", "Speaker ID", "Summarization", "Coding"], correct: 1 },
+            { q: "Which of these is a video use case?", options: ["Activity Recognition", "Spell check", "Sentiment", "Transcription", "Named Entity Recognition"], correct: 0 },
+            { q: "Which field requires 'Medical Imagery Annotation'?", options: ["Finance", "Healthcare", "Retail", "Agriculture", "Sports"], correct: 1 },
+            { q: "Labeling 'Roadside Objects' is for what industry?", options: ["E-commerce", "Autonomous Driving", "Gaming", "Social Media", "Banking"], correct: 1 },
+            { q: "What is 'RLHF' used for?", options: ["Improving Chatbots / LLMs", "Driving cars", "Taking photos", "Playing music", "Sending emails"], correct: 0 },
+            { q: "Perle supports 'Multimodal' data. What does this mean?", options: ["Only text", "Only video", "A combination of Text, Audio, Image, Video", "Only numbers", "Only code"], correct: 2 },
+            { q: "Coding assistance data involves _____.", options: ["Writing poetry", "Debugging and writing code snippets", "Painting", "Singing", "Dancing"], correct: 1 },
+            { q: "What is 'OCR'?", options: ["Optical Character Recognition", "Only Car Racing", "Over Cost Run", "One Cool Robot", "Old Computer Ram"], correct: 0 },
+            { q: "Retail automation might require labeling _____.", options: ["Trees", "Shelf displays and receipts", "Clouds", "Faces", "Animals"], correct: 1 },
+            { q: "Legal reasoning tasks require experts in _____.", options: ["Medicine", "Law", "Physics", "Art", "Music"], correct: 1 },
+            { q: "An 'Anomaly Flag' is used when _____.", options: ["Everything is fine", "Something is weird or wrong in the data", "The user is happy", "The computer crashes", "The internet is slow"], correct: 1 },
+            { q: "Complex reasoning tasks are often for _____.", options: ["Calculators", "LLMs (Large Language Models)", "Microwaves", "Watches", "Cameras"], correct: 1 },
+            { q: "Audio data tasks might include _____.", options: ["Drawing", "Speaker Identification", "Typing", "Coloring", "Reading"], correct: 1 },
+            { q: "Categorizing documents is a form of _____.", options: ["Classification", "Segmentation", "Generation", "Regression", "Clustering"], correct: 0 },
+            { q: "Perle experts might evaluate AI responses for _____.", options: ["Safety and Factuality", "Humor only", "Length only", "Font size", "Color"], correct: 0 },
+            { q: "What is 'Semantic Parsing'?", options: ["Drawing lines", "Understanding the meaning of text structure", "Deleting files", "Copying text", "Printing"], correct: 1 },
+            { q: "Visual Health Data analysis requires _____.", options: ["Gamers", "Doctors / Medical Experts", "Drivers", "Chefs", "Pilots"], correct: 1 },
+            { q: "Perle claims human experts outperform _____.", options: ["Calculators", "Automated labeling (e.g. Amazon Rekognition)", "Other humans", "Computers at math", "None"], correct: 1 },
+            { q: "The 'Long Tail' of data refers to _____.", options: ["Common data", "Rare, ambiguous, or edge cases", "Big files", "Old data", "New data"], correct: 1 }
+        ],
+        6: [ // Funding & Partners
+            { q: "How much did Perle raise in its Seed Round?", options: ["$1M", "$9M", "$50M", "$100M", "$500k"], correct: 1 },
+            { q: "Who led the $9M Seed Round?", options: ["Sequoia", "Framework Ventures", "Paradigm", "Dragonfly", "Polychain"], correct: 1 },
+            { q: "What is Perle's TOTAL funding to date?", options: ["$5M", "$9M", "$17.5M", "$25M", "$100M"], correct: 2 },
+            { q: "Who led the Pre-Seed round?", options: ["Framework", "CoinFund", "a16z", "Google", "Microsoft"], correct: 1 },
+            { q: "Which of these also participated in the funding?", options: ["Protagonist", "McDonalds", "Nike", "Tesla", "Apple"], correct: 0 },
+            { q: "HashKey Capital is an investor in Perle. True or False?", options: ["False", "True", "Unknown", "Maybe", "Only in tokens"], correct: 1 },
+            { q: "Peer VC is an investor in Perle. True or False?", options: ["False", "True", "Unknown", "Maybe", "Only in tokens"], correct: 1 },
+            { q: "The Seed round was announced in which year?", options: ["2023", "2024", "2025", "2026", "2022"], correct: 2 },
+            { q: "The Pre-Seed round was approximately how much?", options: ["$1M", "$8.5M", "$2M", "$20M", "$50M"], correct: 1 },
+            { q: "Framework Ventures is known for investing in _____.", options: ["Oil", "DeFi and Web3 gaming", "Real Estate", "Airlines", "Hotels"], correct: 1 },
+            { q: "The funding allows Perle to launch _____.", options: ["A satellite", "Perle Labs", "A restaurant", "A clothing line", "A bank"], correct: 1 },
+            { q: "CoinFund is a prominent _____ firm.", options: ["Law", "Crypto Native Investment", "Accounting", "Construction", "Design"], correct: 1 },
+            { q: "Perle's investors validate its intersection of _____.", options: ["Food and Tech", "AI and Crypto/Web3", "Music and Art", "Sports and Betting", "Cars and Planes"], correct: 1 },
+            { q: "Did Bill Tai invest in Perle (or its predecessor Kiva)?", options: ["No", "Yes", "Maybe", "Who?", "Unsure"], correct: 1 },
+            { q: "The funding is used to scale the _____ network.", options: ["Social", "Expert / Contributor", "Ad", "Bot", "Cable"], correct: 1 },
+            { q: "Perle is targeting customers in _____.", options: ["Kindergarten", "Regulated/Enterprise Industries", "Retirement homes", "Prisons", "Zoos"], correct: 1 },
+            { q: "The investment signals confidence in _____ data infrastructure.", options: ["Centralized", "Decentralized", "Legacy", "Slow", "Manual"], correct: 1 },
+            { q: "Framework Ventures led which round?", options: ["Series A", "Seed", "Pre-Seed", "IPO", "Series B"], correct: 1 },
+            { q: "What month in 2025 was the Seed round announced?", options: ["January", "August", "December", "March", "May"], correct: 1 },
+            { q: "Is Perle backed by VC money?", options: ["No", "Yes", "Only grants", "Only donations", "Only revenue"], correct: 1 }
+        ],
+        7: [ // Contributor Journey
+            { q: "What is the first step for a new contributor?", options: ["Get paid", "Register and Onboard", "Do complex tasks", "Retire", "Ban users"], correct: 1 },
+            { q: "Before doing tasks, contributors must often pass _____.", options: ["A physical exam", "Training Modules / Qualifiers", "A credit check", "A drug test", "A background check"], correct: 1 },
+            { q: "What do contributors earn for good work?", options: ["Demerits", "Reputation and Crypto Rewards", "Nothing", "Coupons", "Spam"], correct: 1 },
+            { q: "Can anyone become a 'Medical Expert' on Perle?", options: ["Yes, immediately", "No, they must verify their credentials", "Only if they pay", "Only if they guess", "Yes, if they watch Grey's Anatomy"], correct: 1 },
+            { q: "What happens during 'Onboarding'?", options: ["Sleeping", "Profile setup and initial assessment", "Eating", "Gaming", "Driving"], correct: 1 },
+            { q: "Contributors are organized into _____.", options: ["Armies", "Guilds", "Clubs", "Teams", "Gangs"], correct: 1 },
+            { q: "A contributor's history is stored _____.", options: ["Nowhere", "On-chain", "In a notebook", "In the cloud only", "On a floppy disk"], correct: 1 },
+            { q: "Consistency helps a contributor climb the _____.", options: ["Ladder", "Leaderboard", "Tree", "Mountain", "Stairs"], correct: 1 },
+            { q: "High-performing contributors get access to _____.", options: ["Less work", "Higher-value/Complex tasks", "Nothing", "Ads", "Music"], correct: 1 },
+            { q: "The 'Review' phase involves _____.", options: ["Deleting data", "Verifying others' work", "Ignoring data", "Copying data", "Hiding data"], correct: 1 },
+            { q: "Badges showcase a contributor's _____.", options: ["Age", "Verified Skills", "Address", "Phone number", "Pet's name"], correct: 1 },
+            { q: "Perle Labs launched a public beta for contributors in _____.", options: ["2020", "Late 2025", "2030", "2010", "2000"], correct: 1 },
+            { q: "The journey emphasizes _____ over speed.", options: ["Quality", "Quantity", "Mistakes", "Laziness", "Chaos"], correct: 0 },
+            { q: "Rewards are distributed _____.", options: ["Manually", "Algorithmically / Automatically", "Never", "Randomly", "Yearly"], correct: 1 },
+            { q: "Contributors can join from _____.", options: ["USA only", "73+ Countries / Globally", "Mars", "Antarctica only", "Europe only"], correct: 1 },
+            { q: "What is a 'Guild' in Perle?", options: ["A video game clan", "A specialized group of experts (e.g. Coders, Linguists)", "A type of crypto", "A chat room", "A server"], correct: 1 },
+            { q: "The Ambassador program involves _____.", options: ["Coding only", "Promoting and supporting the community", "Sleeping", "Eating", "Running"], correct: 1 },
+            { q: "Can contributors be kicked off?", options: ["No", "Yes, for poor quality or fraud", "Only if they ask", "Never", "Maybe"], correct: 1 },
+            { q: "The contributor experience is gamified with _____.", options: ["XP and Levels", "Nothing", "Punishments", "Fees", "Taxes"], correct: 0 },
+            { q: "Perle aims to pay contributors _____.", options: ["Poorly", "Fairly and transparently", "Secretly", "In exposure", "In IOUs"], correct: 1 }
+        ],
+        8: [ // Events & History
+            { q: "What major event did Perle attend in Dec 2025?", options: ["E3", "Solana Breakpoint", "CES", "Comic Con", "Davos"], correct: 1 },
+            { q: "What was announced at Breakpoint 2025?", options: ["A new logo", "Perle Labs Creator", "A merger", "Bankruptcy", "A party"], correct: 1 },
+            { q: "Who presented at Breakpoint?", options: ["Elon Musk", "Ahmed Rashad", "Satoshi Nakamoto", "Tim Cook", "Bill Gates"], correct: 1 },
+            { q: "Perle was formerly known as _____.", options: ["Kiva AI", "Perle V1", "DataCo", "AI Hub", "SolData"], correct: 0 },
+            { q: "When was the Seed funding announced?", options: ["August 2025", "January 2025", "December 2025", "July 2024", "Never"], correct: 0 },
+            { q: "Perle won which award for 2025?", options: ["Oscar", "ACTAI Global AI Winner", "Grammy", "Nobel Prize", "Webby"], correct: 1 },
+            { q: "Where was Breakpoint 2025 held?", options: ["London", "Abu Dhabi", "New York", "Paris", "Berlin"], correct: 1 },
+            { q: "Perle's beta launched in _____.", options: ["2023", "2025", "2027", "2020", "2019"], correct: 1 },
+            { q: "The 'Creator' demo showed setup taking _____.", options: ["Days", "Minutes", "Months", "Years", "Weeks"], correct: 1 },
+            { q: "Perle's previous Pre-Seed was in _____.", options: ["Oct 2024", "Oct 2025", "Oct 2023", "Oct 2022", "Oct 2021"], correct: 0 },
+            { q: "Ahmed Rashad was interviewed on which podcast?", options: ["Joe Rogan", "BlockHash Podcast", "Lex Fridman", "All-In", "Pivot"], correct: 1 },
+            { q: "Perle's rebrand happened around _____.", options: ["2024/2025", "2020", "2010", "2030", "Never"], correct: 0 },
+            { q: "The Breakpoint presentation emphasized _____.", options: ["Gaming", "Human-led AI", "DeFi", "NFTs", "VR"], correct: 1 },
+            { q: "Perle is part of the _____ ecosystem.", options: ["Ethereum", "Solana", "Cosmos", "Polkadot", "Avalanche"], correct: 1 },
+            { q: "Early investors include _____.", options: ["Bill Tai", "Warren Buffet", "Jeff Bezos", "Mark Zuckerberg", "Oprah"], correct: 0 },
+            { q: "The company was founded by veterans from _____.", options: ["McDonalds", "Scale AI", "Walmart", "Target", "Best Buy"], correct: 1 },
+            { q: "Perle's Discord grew significantly during the _____.", options: ["Bear market", "Beta Launch", "Winter", "Summer", "Night"], correct: 1 },
+            { q: "The 'Perle of Wisdom' blog post discussed _____.", options: ["Cooking", "The Evolution of Data Labeling", "Sports", "Fashion", "Cars"], correct: 1 },
+            { q: "What year was Perle Labs founded (approx)?", options: ["2024/2025", "2010", "2000", "1990", "1980"], correct: 0 },
+            { q: "Perle is often associated with which 'season' of crypto?", options: ["DeFi Summer", "AI x Crypto / DePIN", "NFT Mania", "ICO Boom", "Mining Craze"], correct: 1 }
+        ],
+        9: [ // Philosophy & Future
+            { q: "Perle believes AI needs more _____.", options: ["Electricity", "Human Wisdom", "Silicon", "Water", "Plastic"], correct: 1 },
+            { q: "What is the 'Black Box' problem?", options: ["Not knowing how AI works or where data comes from", "A flight recorder", "A magic trick", "A dark room", "A computer case"], correct: 0 },
+            { q: "Future AI agents will need _____ data.", options: ["Fake", "Verifiable & High Quality", "Low quality", "Random", "Old"], correct: 1 },
+            { q: "Perle opposes 'Blackbox Pipelines' in favor of _____.", options: ["Transparent Workflows", "More black boxes", "Blue boxes", "Red boxes", "No pipelines"], correct: 0 },
+            { q: "The future of AI is _____.", options: ["Human-led", "Robot-led", "Alien-led", "Dog-led", "Cat-led"], correct: 0 },
+            { q: "Perle sees data as a _____ asset.", options: ["Physical", "Digital & Verifiable", "Useless", "Temporary", "Disposable"], correct: 1 },
+            { q: "The 'Era of Experience' refers to AI learning from _____.", options: ["Books", "Human Experience/Interaction", "Nothing", "Space", "Dreams"], correct: 1 },
+            { q: "Perle aims to make human expertise a _____ asset.", options: ["Hidden", "Liquid / Tradable", "Forgotten", "Stolen", "Lost"], correct: 1 },
+            { q: "Transparency becomes _____.", options: ["Weakness", "Power", "Irrelevant", "Expensive", "Slow"], correct: 1 },
+            { q: "Agentic AI requires _____ to function reliably.", options: ["Luck", "Trustworthy Data", "Magic", "Hope", "Prayers"], correct: 1 },
+            { q: "Perle envisions a world where contributors are _____.", options: ["Exploited", "Owners and Partners", "Ignored", "Robots", "Slaves"], correct: 1 },
+            { q: "Data quality is the _____ of AI.", options: ["Roof", "Bottleneck / Foundation", "Window", "Door", "Paint"], correct: 1 },
+            { q: "Perle supports the concept of _____ AI.", options: ["Responsible / Ethical", "Rogue", "Dangerous", "Uncontrolled", "Evil"], correct: 0 },
+            { q: "Decentralization helps avoid _____.", options: ["Success", "Single points of failure / Monopoly", "Happiness", "Profit", "Growth"], correct: 1 },
+            { q: "The platform empowers the 'Long Tail' of _____.", options: ["Talent", "Cats", "Dogs", "Cars", "Planes"], correct: 0 },
+            { q: "Perle's philosophy aligns with _____.", options: ["Web2 control", "Web3 sovereignty", "Web1 static", "No web", "Dark web"], correct: 1 },
+            { q: "Human oversight is essential for _____ cases.", options: ["Simple", "Edge / Complex", "None", "All", "Math"], correct: 1 },
+            { q: "Perle wants to democratize access to _____.", options: ["Food", "AI Training Economy", "Water", "Air", "Space"], correct: 1 },
+            { q: "The 'Perle' name symbolizes _____.", options: ["A rock", "Value / Wisdom (Pearl)", "A car", "A fruit", "A planet"], correct: 1 },
+            { q: "Perle is building for the next _____ years of AI.", options: ["1", "10-20", "1000", "0", "5"], correct: 1 }
+        ]
+    };
+
+    // --- APP STATE ---
+    let currentUser = null;
+    let unlockedChapters = [0]; // Start with Ch 0 unlocked
+    let scores = {}; // { chapterId: score }
+
+    // --- DOM ELEMENTS ---
+    const loginScreen = document.getElementById('login-screen');
+    const userHeader = document.getElementById('user-header');
+    const chapterGrid = document.getElementById('chapter-grid');
+    const quizInterface = document.getElementById('quiz-interface');
+
+    // --- INIT ---
+    function init() {
+        const savedUser = localStorage.getItem('perle_user');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+            unlockedChapters = JSON.parse(localStorage.getItem('perle_unlocked')) || [0];
+            scores = JSON.parse(localStorage.getItem('perle_scores')) || {};
+            showDashboard();
+        }
+    }
+
+    // --- AUTH ---
+    async function handleLogin() {
+        const handle = document.getElementById('twitter-handle').value.trim().replace('@', '');
+        if (!handle) return alert("Please enter a username.");
+
+        // Simulate fetching profile (using unavatar.io)
+        const avatarUrl = `https://unavatar.io/twitter/${handle}`;
+        
+        currentUser = {
+            handle: handle,
+            avatar: avatarUrl
+        };
+
+        // Save session
+        localStorage.setItem('perle_user', JSON.stringify(currentUser));
+        localStorage.setItem('perle_unlocked', JSON.stringify(unlockedChapters));
+        
+        showDashboard();
+    }
+
+    function showDashboard() {
+        loginScreen.style.display = 'none';
+        userHeader.style.display = 'flex';
+        chapterGrid.style.display = 'grid';
+        quizInterface.style.display = 'none';
+
+        document.getElementById('header-username').innerText = `@${currentUser.handle}`;
+        document.getElementById('header-avatar').src = currentUser.avatar;
+        // Fallback for avatar error
+        document.getElementById('header-avatar').onerror = function() {
+            this.src = 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'; 
+        };
+
+        renderChapters();
+    }
+
+    function logout() {
+        localStorage.removeItem('perle_user');
+        location.reload();
+    }
+
+    // --- CHAPTERS ---
+    function renderChapters() {
+        chapterGrid.innerHTML = '';
+        chapters.forEach(ch => {
+            const isLocked = !unlockedChapters.includes(ch.id);
+            const score = scores[ch.id] !== undefined ? scores[ch.id] : null;
+            
+            const card = document.createElement('div');
+            card.className = `chapter-card ${isLocked ? 'locked' : ''}`;
+            card.onclick = () => !isLocked && startQuiz(ch.id);
+            
+            card.innerHTML = `
+                <div style="font-size:0.8rem; color:var(--accent); font-weight:bold; margin-bottom:5px;">CHAPTER ${ch.id + 1}</div>
+                <h3 style="margin:0; margin-bottom:5px;">${ch.title}</h3>
+                <p style="font-size:0.9rem; color:#888; margin:0;">${ch.desc}</p>
+                <div class="chapter-status">
+                    <span>${isLocked ? '🔒 Locked' : '🔓 Open'}</span>
+                    <span>${score !== null ? score + '/20 Correct' : 'Not started'}</span>
+                </div>
+                ${score >= 15 ? '<div style="position:absolute; top:10px; right:10px;">✅</div>' : ''}
+            `;
+            chapterGrid.appendChild(card);
+        });
+    }
+
+    // --- QUIZ LOGIC ---
+    let currentQuiz = {
+        chapterId: null,
+        qIndex: 0,
+        score: 0,
+        questions: []
+    };
+
+    function startQuiz(chapterId) {
+        chapterGrid.style.display = 'none';
+        quizInterface.style.display = 'block';
+        
+        // Shuffle questions for variety (Fisher-Yates)
+        const qs = [...questionBank[chapterId]]; // Copy
+        for (let i = qs.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [qs[i], qs[j]] = [qs[j], qs[i]];
+        }
+
+        currentQuiz = {
+            chapterId: chapterId,
+            qIndex: 0,
+            score: 0,
+            questions: qs
+        };
+
+        document.getElementById('chapter-title-display').innerText = chapters[chapterId].title;
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = currentQuiz.questions[currentQuiz.qIndex];
+        const total = currentQuiz.questions.length;
+        
+        document.getElementById('quiz-progress').style.width = `${((currentQuiz.qIndex) / total) * 100}%`;
+        document.getElementById('q-counter').innerText = `Question ${currentQuiz.qIndex + 1}/${total}`;
+        document.getElementById('q-text').innerText = q.q;
+
+        const optsContainer = document.getElementById('options-container');
+        optsContainer.innerHTML = '';
+
+        q.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => handleAnswer(idx, btn, q.correct);
+            optsContainer.appendChild(btn);
+        });
+    }
+
+    function handleAnswer(selectedIdx, btn, correctIdx) {
+        // Disable all buttons
+        const allBtns = document.querySelectorAll('.option-btn');
+        allBtns.forEach(b => b.disabled = true);
+
+        if (selectedIdx === correctIdx) {
+            btn.classList.add('correct');
+            currentQuiz.score++;
+        } else {
+            btn.classList.add('wrong');
+            // Highlight correct one
+            allBtns[correctIdx].classList.add('correct');
+        }
+
+        // Wait and go next
+        setTimeout(() => {
+            currentQuiz.qIndex++;
+            if (currentQuiz.qIndex < currentQuiz.questions.length) {
+                renderQuestion();
+            } else {
+                finishQuiz();
+            }
+        }, 1200);
+    }
+
+    function finishQuiz() {
+        // Save score
+        scores[currentQuiz.chapterId] = currentQuiz.score;
+        
+        // Unlock next chapter if score > 10 (50%)
+        if (currentQuiz.score >= 10) {
+            const nextId = currentQuiz.chapterId + 1;
+            if (nextId < chapters.length && !unlockedChapters.includes(nextId)) {
+                unlockedChapters.push(nextId);
+                alert(`Quiz Complete! Score: ${currentQuiz.score}/20\nNext Chapter Unlocked! 🔓`);
+            } else {
+                alert(`Quiz Complete! Score: ${currentQuiz.score}/20`);
+            }
+        } else {
+            alert(`Quiz Complete! Score: ${currentQuiz.score}/20\n(You need 10 to unlock the next chapter)`);
+        }
+
+        localStorage.setItem('perle_scores', JSON.stringify(scores));
+        localStorage.setItem('perle_unlocked', JSON.stringify(unlockedChapters));
+
+        returnToMenu();
+    }
+
+    function returnToMenu() {
+        quizInterface.style.display = 'none';
+        chapterGrid.style.display = 'grid';
+        renderChapters();
+    }
+
+    // Run
+    init();
+
+</script>
+</body>
+</html>
